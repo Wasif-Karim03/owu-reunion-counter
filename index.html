@@ -22,6 +22,12 @@
     --accent-border: #f0c4b8;
     --green: #2d7a4f;
     --green-light: #edf7f2;
+    --blue: #2563a8;
+    --blue-light: #eff4fc;
+    --blue-border: #b8d0f0;
+    --purple: #6b3fa0;
+    --purple-light: #f5f0fc;
+    --purple-border: #d0b8f0;
     --mono: 'DM Mono', monospace;
     --sans: 'DM Sans', sans-serif;
   }
@@ -71,25 +77,87 @@
   }
 
   .main {
-    max-width: 860px;
+    max-width: 960px;
     margin: 0 auto;
     padding: 2.5rem 1.5rem;
+  }
+
+  /* Two upload zones */
+  .upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 620px) {
+    .upload-grid { grid-template-columns: 1fr; }
+  }
+
+  .upload-slot {}
+
+  .upload-slot-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .upload-slot-label .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-weekend {
+    background: var(--blue-light);
+    color: var(--blue);
+    border: 1px solid var(--blue-border);
+  }
+
+  .badge-50th {
+    background: var(--purple-light);
+    color: var(--purple);
+    border: 1px solid var(--purple-border);
   }
 
   .drop-zone {
     background: var(--surface);
     border: 1.5px dashed var(--border);
     border-radius: 14px;
-    padding: 3rem 2rem;
+    padding: 2rem 1.5rem;
     text-align: center;
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s;
     position: relative;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .drop-zone:hover, .drop-zone.drag-over {
     border-color: var(--accent);
     background: var(--accent-light);
+  }
+
+  .drop-zone.loaded-weekend {
+    border-color: var(--blue);
+    border-style: solid;
+    background: var(--blue-light);
+  }
+
+  .drop-zone.loaded-50th {
+    border-color: var(--purple);
+    border-style: solid;
+    background: var(--purple-light);
   }
 
   .drop-zone input[type="file"] {
@@ -102,39 +170,68 @@
   }
 
   .drop-icon {
-    width: 52px;
-    height: 52px;
+    width: 44px;
+    height: 44px;
     background: var(--surface2);
-    border-radius: 12px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 1rem;
+    margin: 0 auto 0.75rem;
     border: 1px solid var(--border);
+    flex-shrink: 0;
   }
 
   .drop-zone h2 {
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--text);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .drop-zone p {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text2);
   }
 
-  .drop-zone .file-name {
-    margin-top: 1rem;
+  .file-name {
+    margin-top: 0.75rem;
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 12px;
     color: var(--accent);
     background: var(--accent-light);
     border: 1px solid var(--accent-border);
-    display: inline-block;
-    padding: 4px 12px;
+    display: none;
+    padding: 3px 10px;
     border-radius: 20px;
+    word-break: break-all;
+    max-width: 100%;
+  }
+
+  .file-name.weekend-name {
+    color: var(--blue);
+    background: var(--blue-light);
+    border-color: var(--blue-border);
+  }
+
+  .file-name.fiftieth-name {
+    color: var(--purple);
+    background: var(--purple-light);
+    border-color: var(--purple-border);
+  }
+
+  .check-icon {
+    display: none;
+    margin-bottom: 0.5rem;
+  }
+
+  .drop-zone.loaded-weekend .check-icon,
+  .drop-zone.loaded-50th .check-icon {
+    display: block;
+  }
+
+  .drop-zone.loaded-weekend .drop-icon,
+  .drop-zone.loaded-50th .drop-icon {
     display: none;
   }
 
@@ -160,7 +257,6 @@
 
   @media (max-width: 540px) {
     .metrics { grid-template-columns: 1fr 1fr; }
-    .metrics .metric:last-child { grid-column: span 2; }
   }
 
   .metric {
@@ -169,6 +265,10 @@
     border-radius: 10px;
     padding: 1rem 1.1rem;
   }
+
+  .metric.metric-weekend { border-top: 3px solid var(--blue); }
+  .metric.metric-50th    { border-top: 3px solid var(--purple); }
+  .metric.metric-total   { border-top: 3px solid var(--accent); }
 
   .metric-label {
     font-size: 12px;
@@ -185,6 +285,12 @@
     color: var(--text);
     letter-spacing: -0.02em;
     line-height: 1.1;
+  }
+
+  .metric-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 2px;
   }
 
   .section-head {
@@ -238,6 +344,10 @@
     border-bottom: 1px solid var(--border);
   }
 
+  thead th.col-weekend { color: var(--blue); }
+  thead th.col-50th    { color: var(--purple); }
+  thead th.col-total   { color: var(--accent); }
+
   tbody tr { border-bottom: 1px solid var(--border); }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--bg); }
@@ -251,24 +361,49 @@
   td.event-name {
     font-weight: 400;
     font-size: 14px;
-    max-width: 300px;
+    max-width: 260px;
     line-height: 1.4;
   }
 
-  td.price { color: var(--text2); font-family: var(--mono); font-size: 13px; }
+  td.num {
+    font-family: var(--mono);
+    font-size: 13px;
+    white-space: nowrap;
+  }
 
   .count-pill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--accent-light);
-    color: var(--accent);
-    border: 1px solid var(--accent-border);
     border-radius: 20px;
     padding: 3px 12px;
     font-weight: 600;
     font-size: 14px;
     font-family: var(--mono);
+  }
+
+  .pill-total {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+  }
+
+  .pill-weekend {
+    background: var(--blue-light);
+    color: var(--blue);
+    border: 1px solid var(--blue-border);
+  }
+
+  .pill-50th {
+    background: var(--purple-light);
+    color: var(--purple);
+    border: 1px solid var(--purple-border);
+  }
+
+  .pill-zero {
+    background: var(--surface2);
+    color: var(--text3);
+    border: 1px solid var(--border);
   }
 
   .paste-section { margin-bottom: 1.5rem; }
@@ -283,15 +418,18 @@
     white-space: pre;
     overflow-x: auto;
     line-height: 1.8;
-    max-height: 260px;
+    max-height: 300px;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: #444 transparent;
   }
 
-  .paste-box .date-line { color: #7c9e87; }
-  .paste-box .event-line { color: #d4cfc8; }
-  .paste-box .count-part { color: #e8a07a; }
+  .paste-box .date-line   { color: #7c9e87; }
+  .paste-box .header-line { color: #9e9890; }
+  .paste-box .event-line  { color: #d4cfc8; }
+  .paste-box .num-weekend { color: #7aa4d4; }
+  .paste-box .num-50th    { color: #b89ad8; }
+  .paste-box .num-total   { color: #e8a07a; }
 
   .actions {
     display: flex;
@@ -357,6 +495,28 @@
     border-top: 1px solid var(--border);
     margin-top: 2rem;
   }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
 </style>
 </head>
 <body>
@@ -370,26 +530,71 @@
     </svg>
   </div>
   <div class="header-text">
-    <h1>OWU Reunion Weekend — Ticket Counter</h1>
-    <p>Upload your ticket export to get today's counts, ready to paste</p>
+    <h1>OWU Reunion Weekend &mdash; Ticket Counter</h1>
+    <p>Upload both ticket exports to get combined event counts</p>
   </div>
 </header>
 
 <div class="main">
 
-  <div class="drop-zone" id="dropZone">
-    <input type="file" id="fileInput" accept=".xls,.xlsx" onchange="handleFile(event)">
-    <div class="drop-icon">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="12" y1="18" x2="12" y2="12"/>
-        <polyline points="9 15 12 12 15 15"/>
-      </svg>
+  <div class="upload-grid">
+
+    <!-- Reunion Weekend file -->
+    <div class="upload-slot">
+      <div class="upload-slot-label">
+        <span class="badge badge-weekend">File 1</span>
+        Reunion Weekend
+      </div>
+      <div class="drop-zone" id="dropZone1">
+        <input type="file" id="fileInput1" accept=".xls,.xlsx" onchange="handleFile(event, 'weekend')">
+        <div class="check-icon">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="16" fill="#eff4fc" stroke="#2563a8" stroke-width="1.5"/>
+            <polyline points="10 18 15.5 23.5 26 12" stroke="#2563a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="drop-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <polyline points="9 15 12 12 15 15"/>
+          </svg>
+        </div>
+        <h2>Drop Weekend XLS here</h2>
+        <p>Multi-sheet file &mdash; one tab per event</p>
+        <span class="file-name weekend-name" id="fileName1"></span>
+      </div>
     </div>
-    <h2>Drop your ticket XLS file here</h2>
-    <p>or click anywhere to browse &mdash; accepts .xls and .xlsx</p>
-    <span class="file-name" id="fileName"></span>
+
+    <!-- 50th Reunion file -->
+    <div class="upload-slot">
+      <div class="upload-slot-label">
+        <span class="badge badge-50th">File 2</span>
+        50th Reunion
+      </div>
+      <div class="drop-zone" id="dropZone2">
+        <input type="file" id="fileInput2" accept=".xls,.xlsx" onchange="handleFile(event, '50th')">
+        <div class="check-icon">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="16" fill="#f5f0fc" stroke="#6b3fa0" stroke-width="1.5"/>
+            <polyline points="10 18 15.5 23.5 26 12" stroke="#6b3fa0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="drop-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <polyline points="9 15 12 12 15 15"/>
+          </svg>
+        </div>
+        <h2>Drop 50th Reunion XLS here</h2>
+        <p>Single-sheet file &mdash; event choices in cols R &amp; S</p>
+        <span class="file-name fiftieth-name" id="fileName2"></span>
+      </div>
+    </div>
+
   </div>
 
   <div class="error" id="errorMsg"></div>
@@ -400,19 +605,23 @@
 
     <div class="card">
       <div style="padding: 12px 16px 0; border-bottom: 1px solid var(--border);">
-        <div class="section-head" style="margin-bottom: 12px;">
+        <div class="section-head" style="margin-bottom: 8px;">
           <span class="section-title">Event breakdown</span>
           <span class="tag" id="dateTag"></span>
+        </div>
+        <div class="legend" style="margin-bottom: 12px;">
+          <div class="legend-item"><div class="legend-dot" style="background:#2563a8"></div> Reunion Weekend file</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#6b3fa0"></div> 50th Reunion file</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#c84b2f"></div> Combined total</div>
         </div>
       </div>
       <table>
         <thead>
           <tr>
             <th>Event</th>
-            <th>Price</th>
-            <th>Total</th>
-            <th>Buyers</th>
-            <th>Guests</th>
+            <th class="col-weekend">Weekend</th>
+            <th class="col-50th">50th Reunion</th>
+            <th class="col-total">Total</th>
           </tr>
         </thead>
         <tbody id="eventTbody"></tbody>
@@ -435,7 +644,7 @@
       </div>
     </div>
 
-    <button class="reset-btn" onclick="resetApp()">Upload a different file</button>
+    <button class="reset-btn" onclick="resetApp()">Upload different files</button>
 
   </div>
 </div>
@@ -445,31 +654,34 @@
 <script>
 let csvData = '';
 let pasteData = '';
+let weekendEvents = null;  // [{eventName, price, total, buyers, accompanying}]
+let fiftieth = null;       // {events: {name: count}, totalRows: n}
 
-const dropZone = document.getElementById('dropZone');
-
-dropZone.addEventListener('dragover', e => {
-  e.preventDefault();
-  dropZone.classList.add('drag-over');
+// ── Drag & drop wiring ───────────────────────────────────────────────────────
+['dropZone1','dropZone2'].forEach((id, idx) => {
+  const zone = document.getElementById(id);
+  const kind = idx === 0 ? 'weekend' : '50th';
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) processFile(f, kind);
+  });
 });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
-  const f = e.dataTransfer.files[0];
-  if (f) processFile(f);
-});
 
-function handleFile(e) {
+function handleFile(e, kind) {
   const f = e.target.files[0];
-  if (f) processFile(f);
+  if (f) processFile(f, kind);
 }
 
-function processFile(file) {
+// ── File processing ──────────────────────────────────────────────────────────
+function processFile(file, kind) {
   const err = document.getElementById('errorMsg');
   err.style.display = 'none';
 
-  const nameEl = document.getElementById('fileName');
+  const nameEl = document.getElementById(kind === 'weekend' ? 'fileName1' : 'fileName2');
   nameEl.textContent = file.name;
   nameEl.style.display = 'inline-block';
 
@@ -478,100 +690,230 @@ function processFile(file) {
     try {
       const data = new Uint8Array(e.target.result);
       const wb = XLSX.read(data, { type: 'array' });
-      const events = [];
 
-      wb.SheetNames.forEach(sheetName => {
-        const ws = wb.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-        if (rows.length < 3) return;
+      if (kind === 'weekend') {
+        weekendEvents = parseWeekendFile(wb);
+        const zone = document.getElementById('dropZone1');
+        zone.classList.remove('drag-over');
+        zone.classList.add('loaded-weekend');
+      } else {
+        fiftieth = parse50thFile(wb);
+        const zone = document.getElementById('dropZone2');
+        zone.classList.remove('drag-over');
+        zone.classList.add('loaded-50th');
+      }
 
-        const titleRow = rows[0];
-        const headerRow = rows[1];
-        const dataRows = rows.slice(2).filter(r => r.some(c => String(c).trim() !== ''));
-
-        const titleCell = Array.isArray(titleRow) ? String(titleRow[0] || '') : '';
-        const priceMatch = sheetName.match(/\((\d+(?:\.\d+)?)\)/);
-        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
-
-        const headers = headerRow.map(h => String(h || '').trim());
-        const guestTypeIdx = headers.findIndex(h => h.toLowerCase().includes('guest type'));
-
-        let buyers = 0, accompanying = 0;
-        dataRows.forEach(row => {
-          const gt = guestTypeIdx >= 0 ? String(row[guestTypeIdx] || '').trim().toLowerCase() : '';
-          if (gt === 'buyer') buyers++;
-          else accompanying++;
-        });
-
-        let eventName = titleCell.split('[')[0].replace(/\(R\)/gi, '').replace(/\s+/g, ' ').trim();
-        if (!eventName || eventName.length < 3) eventName = sheetName;
-
-        events.push({ eventName, price, total: dataRows.length, buyers, accompanying });
-      });
-
-      if (events.length === 0) throw new Error('No valid event tabs found in this file. Make sure it matches the ticket export format.');
-
-      renderResults(events);
+      if (weekendEvents && fiftieth) mergeAndRender();
     } catch(ex) {
       err.textContent = ex.message;
       err.style.display = 'block';
+      console.error(ex);
     }
   };
   reader.readAsArrayBuffer(file);
 }
 
-function renderResults(events) {
-  const totalRegs = events.reduce((s, e) => s + e.total, 0);
-  const totalBuyers = events.reduce((s, e) => s + e.buyers, 0);
-  const totalAccompanying = events.reduce((s, e) => s + e.accompanying, 0);
+// Parse the reunion weekend file (multiple sheets, one per event)
+function parseWeekendFile(wb) {
+  const events = [];
+  wb.SheetNames.forEach(sheetName => {
+    const ws = wb.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    if (rows.length < 3) return;
+
+    const titleRow = rows[0];
+    const headerRow = rows[1];
+    const dataRows = rows.slice(2).filter(r => r.some(c => String(c).trim() !== ''));
+
+    const priceMatch = sheetName.match(/\((\d+(?:\.\d+)?)\)/);
+    const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+
+    const headers = headerRow.map(h => String(h || '').trim());
+    const guestTypeIdx = headers.findIndex(h => h.toLowerCase().includes('guest type'));
+
+    let buyers = 0, accompanying = 0;
+    dataRows.forEach(row => {
+      const gt = guestTypeIdx >= 0 ? String(row[guestTypeIdx] || '').trim().toLowerCase() : '';
+      if (gt === 'buyer') buyers++;
+      else accompanying++;
+    });
+
+    const titleCell = Array.isArray(titleRow) ? String(titleRow[0] || '') : '';
+    let eventName = titleCell.split('[')[0].replace(/\(R\)/gi, '').replace(/\s+/g, ' ').trim();
+    if (!eventName || eventName.length < 3) eventName = sheetName;
+
+    events.push({ eventName, price, total: dataRows.length, buyers, accompanying });
+  });
+  if (events.length === 0) throw new Error('No valid event tabs found in the Reunion Weekend file.');
+  return events;
+}
+
+// Parse the 50th reunion file (single sheet, cols R & S = event choices)
+function parse50thFile(wb) {
+  // Try to find the single-sheet 50th reunion workbook
+  const sheetName = wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  if (rows.length < 3) throw new Error('50th Reunion file appears empty.');
+
+  const headerRow = rows[1];
+  const dataRows = rows.slice(2).filter(r => r.some(c => String(c).trim() !== ''));
+
+  // Locate Friday and Saturday event choice columns
+  const headers = headerRow.map(h => String(h || '').trim().toLowerCase());
+  let fridayIdx = headers.findIndex(h => h.includes('friday') && h.includes('events'));
+  let satIdx    = headers.findIndex(h => h.includes('saturday') && h.includes('events'));
+
+  // Fallback: columns R (17) and S (18) if header search fails
+  if (fridayIdx < 0) fridayIdx = 17;
+  if (satIdx < 0)    satIdx = 18;
+
+  const eventCounts = {};
+  dataRows.forEach(row => {
+    [fridayIdx, satIdx].forEach(colIdx => {
+      const val = String(row[colIdx] || '').trim();
+      if (!val) return;
+      val.split(',').forEach(ev => {
+        ev = ev.trim();
+        if (!ev || ev.toLowerCase() === 'n/a') return;
+        // Strip time prefix like "6:30 p.m. " or "11:30 a.m. "
+        const name = ev.replace(/^\d+(?::\d+)?\s*(?:a\.m\.|p\.m\.)\s*/i, '').trim();
+        if (!name) return;
+        eventCounts[name] = (eventCounts[name] || 0) + 1;
+      });
+    });
+  });
+
+  if (Object.keys(eventCounts).length === 0)
+    throw new Error('No event choices found in the 50th Reunion file. Check that columns R & S contain event data.');
+
+  return { events: eventCounts, totalRows: dataRows.length };
+}
+
+// ── Event name matching ──────────────────────────────────────────────────────
+function normalizeForMatch(name) {
+  return name
+    .replace(/^\d+(?::\d+)?\s*(?:a\.m\.|p\.m\.)\s*/i, '')
+    .replace(/\(R\)/gi, '')
+    .replace(/[^a-z0-9\s]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function wordOverlapScore(a, b) {
+  const na = normalizeForMatch(a);
+  const nb = normalizeForMatch(b);
+  if (na === nb) return 1.0;
+  const wordsA = na.split(' ').filter(w => w.length > 3);
+  const wordsB = nb.split(' ').filter(w => w.length > 3);
+  if (!wordsA.length || !wordsB.length) return 0;
+  // stem match: first 4 chars
+  const matched = wordsA.filter(wa =>
+    wordsB.some(wb => wa.slice(0,4) === wb.slice(0,4))
+  );
+  return matched.length / Math.max(wordsA.length, wordsB.length);
+}
+
+// ── Merge & render ───────────────────────────────────────────────────────────
+function mergeAndRender() {
+  const weekendNames = weekendEvents.map(e => e.eventName);
+  const merged = [];
+  const matched50th = new Set();
+
+  // For each weekend event, find the best matching 50th event
+  weekendEvents.forEach(ev => {
+    let bestKey = null, bestScore = 0;
+    Object.keys(fiftieth.events).forEach(name50 => {
+      const score = wordOverlapScore(ev.eventName, name50);
+      if (score > bestScore) { bestScore = score; bestKey = name50; }
+    });
+    const count50 = (bestKey && bestScore >= 0.25) ? fiftieth.events[bestKey] : 0;
+    if (bestKey && bestScore >= 0.25) matched50th.add(bestKey);
+    merged.push({
+      name: ev.eventName,
+      weekend: ev.total,
+      weekendBuyers: ev.buyers,
+      weekendAccompanying: ev.accompanying,
+      fiftieth: count50,
+      total: ev.total + count50,
+      price: ev.price
+    });
+  });
+
+  // Add 50th-only events (no match in weekend file)
+  Object.entries(fiftieth.events).forEach(([name, count]) => {
+    if (!matched50th.has(name)) {
+      merged.push({ name, weekend: 0, weekendBuyers: 0, weekendAccompanying: 0, fiftieth: count, total: count, price: 0 });
+    }
+  });
+
+  renderResults(merged);
+}
+
+function renderResults(merged) {
+  const totalWeekend = weekendEvents.reduce((s, e) => s + e.total, 0);
+  const total50th    = fiftieth.totalRows;
+  const grandTotal   = merged.reduce((s, e) => s + e.total, 0);
 
   document.getElementById('metricGrid').innerHTML = `
-    <div class="metric">
-      <div class="metric-label">Total registrations</div>
-      <div class="metric-value">${totalRegs}</div>
+    <div class="metric metric-weekend">
+      <div class="metric-label">Weekend registrations</div>
+      <div class="metric-value">${totalWeekend}</div>
+      <div class="metric-sub">across ${weekendEvents.length} events</div>
     </div>
-    <div class="metric">
-      <div class="metric-label">Total buyers</div>
-      <div class="metric-value">${totalBuyers}</div>
+    <div class="metric metric-50th">
+      <div class="metric-label">50th Reunion attendees</div>
+      <div class="metric-value">${total50th}</div>
+      <div class="metric-sub">class of 1976</div>
     </div>
-    <div class="metric">
-      <div class="metric-label">Events tracked</div>
-      <div class="metric-value">${events.length}</div>
+    <div class="metric metric-total">
+      <div class="metric-label">Combined event slots</div>
+      <div class="metric-value">${grandTotal}</div>
+      <div class="metric-sub">total across both files</div>
     </div>
   `;
 
   const today = new Date();
   const dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const shortDate = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).replace(' ', '-');
-
   document.getElementById('dateTag').textContent = dateStr;
 
   const tbody = document.getElementById('eventTbody');
   tbody.innerHTML = '';
-  events.forEach(ev => {
+  merged.forEach(ev => {
     const tr = document.createElement('tr');
+    const wPill   = ev.weekend  > 0 ? `<span class="count-pill pill-weekend">${ev.weekend}</span>`  : `<span class="count-pill pill-zero">—</span>`;
+    const fPill   = ev.fiftieth > 0 ? `<span class="count-pill pill-50th">${ev.fiftieth}</span>`    : `<span class="count-pill pill-zero">—</span>`;
+    const totPill = `<span class="count-pill pill-total">${ev.total}</span>`;
     tr.innerHTML = `
-      <td class="event-name">${ev.eventName}</td>
-      <td class="price">${ev.price === 0 ? 'Free' : '$' + ev.price.toFixed(2)}</td>
-      <td><span class="count-pill">${ev.total}</span></td>
-      <td style="color:var(--text2); font-family:var(--mono); font-size:13px;">${ev.buyers}</td>
-      <td style="color:var(--text2); font-family:var(--mono); font-size:13px;">${ev.accompanying}</td>
+      <td class="event-name">${ev.name}</td>
+      <td class="num">${wPill}</td>
+      <td class="num">${fPill}</td>
+      <td class="num">${totPill}</td>
     `;
     tbody.appendChild(tr);
   });
 
-  const pasteLines = events.map(ev => `${ev.eventName}\t${ev.total}`);
-  pasteData = pasteLines.join('\n');
+  // Paste output (tab-separated, 4 columns)
+  const header = `Event\tWeekend\t50th Reunion\tTotal`;
+  const lines = merged.map(ev => `${ev.name}\t${ev.weekend}\t${ev.fiftieth}\t${ev.total}`);
+  pasteData = [header, ...lines].join('\n');
 
   const pasteBox = document.getElementById('pasteBox');
-  pasteBox.innerHTML = `<span class="date-line"># ${dateStr}</span>\n` +
-    events.map(ev => {
-      const parts = ev.eventName.split(/\s{2,}/);
-      return `<span class="event-line">${ev.eventName}</span>\t<span class="count-part">${ev.total}</span>`;
-    }).join('\n');
+  pasteBox.innerHTML =
+    `<span class="date-line"># ${dateStr}</span>\n` +
+    `<span class="header-line">Event\t\t\t</span><span class="num-weekend">Weekend</span>\t<span class="num-50th">50th</span>\t<span class="num-total">Total</span>\n` +
+    merged.map(ev =>
+      `<span class="event-line">${ev.name}</span>\t` +
+      `<span class="num-weekend">${ev.weekend}</span>\t` +
+      `<span class="num-50th">${ev.fiftieth}</span>\t` +
+      `<span class="num-total">${ev.total}</span>`
+    ).join('\n');
 
-  csvData = 'Event,Total Registrants,Buyers,Accompanying,Ticket Price\n' +
-    events.map(ev => `"${ev.eventName}",${ev.total},${ev.buyers},${ev.accompanying},${ev.price}`).join('\n');
+  csvData = 'Event,Weekend Count,50th Reunion Count,Total,Weekend Buyers,Weekend Accompanying,Ticket Price\n' +
+    merged.map(ev =>
+      `"${ev.name}",${ev.weekend},${ev.fiftieth},${ev.total},${ev.weekendBuyers},${ev.weekendAccompanying},${ev.price}`
+    ).join('\n');
 
   document.getElementById('results').style.display = 'block';
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -590,8 +932,7 @@ function downloadCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const today = new Date().toISOString().slice(0, 10);
-  a.download = `owu-reunion-counts-${today}.csv`;
+  a.download = `owu-reunion-counts-${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -599,10 +940,19 @@ function downloadCSV() {
 }
 
 function resetApp() {
+  weekendEvents = null;
+  fiftieth = null;
   document.getElementById('results').style.display = 'none';
-  document.getElementById('fileName').style.display = 'none';
+  ['fileName1','fileName2'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = 'none';
+    el.textContent = '';
+  });
   document.getElementById('errorMsg').style.display = 'none';
-  document.getElementById('fileInput').value = '';
+  document.getElementById('fileInput1').value = '';
+  document.getElementById('fileInput2').value = '';
+  document.getElementById('dropZone1').classList.remove('loaded-weekend');
+  document.getElementById('dropZone2').classList.remove('loaded-50th');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 </script>
