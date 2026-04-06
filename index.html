@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OWU Reunion Ticket Counter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: #dedad3;
+    --text: #1a1816;
+    --text2: #6b6560;
+    --text3: #9e9890;
+    --accent: #c84b2f;
+    --accent-light: #fdf0ec;
+    --accent-border: #f0c4b8;
+    --green: #2d7a4f;
+    --green-light: #edf7f2;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo-mark svg { display: block; }
+
+  .header-text h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .header-text p {
+    font-size: 13px;
+    color: var(--text2);
+    font-weight: 300;
+  }
+
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+  }
+
+  .drop-zone {
+    background: var(--surface);
+    border: 1.5px dashed var(--border);
+    border-radius: 14px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .drop-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--surface2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    border: 1px solid var(--border);
+  }
+
+  .drop-zone h2 {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .drop-zone p {
+    font-size: 14px;
+    color: var(--text2);
+  }
+
+  .drop-zone .file-name {
+    margin-top: 1rem;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-light);
+    border: 1px solid var(--accent-border);
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: none;
+  }
+
+  .error {
+    margin-top: 1rem;
+    padding: 10px 14px;
+    background: #fdf0ec;
+    border: 1px solid #f0c4b8;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--accent);
+    display: none;
+  }
+
+  .results { margin-top: 2rem; display: none; }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 1.75rem;
+  }
+
+  @media (max-width: 540px) {
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .metrics .metric:last-child { grid-column: span 2; }
+  }
+
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+  }
+
+  .metric-label {
+    font-size: 12px;
+    color: var(--text3);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .metric-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text3);
+  }
+
+  .tag {
+    font-size: 12px;
+    font-family: var(--mono);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 2px 10px;
+    border-radius: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  thead th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text3);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg); }
+
+  tbody td {
+    padding: 11px 16px;
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  td.event-name {
+    font-weight: 400;
+    font-size: 14px;
+    max-width: 300px;
+    line-height: 1.4;
+  }
+
+  td.price { color: var(--text2); font-family: var(--mono); font-size: 13px; }
+
+  .count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-weight: 600;
+    font-size: 14px;
+    font-family: var(--mono);
+  }
+
+  .paste-section { margin-bottom: 1.5rem; }
+
+  .paste-box {
+    background: #1a1816;
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: #d4cfc8;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.8;
+    max-height: 260px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #444 transparent;
+  }
+
+  .paste-box .date-line { color: #7c9e87; }
+  .paste-box .event-line { color: #d4cfc8; }
+  .paste-box .count-part { color: #e8a07a; }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  button {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 9px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: background 0.12s, border-color 0.12s;
+  }
+
+  button:hover { background: var(--surface2); }
+
+  button.primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  button.primary:hover { background: #b03f25; }
+
+  .copied-msg {
+    font-size: 13px;
+    color: var(--green);
+    display: none;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .copied-msg.show { display: flex; }
+
+  .reset-btn {
+    margin-top: 1.5rem;
+    display: block;
+    text-align: center;
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .reset-btn:hover { color: var(--text); background: none; }
+
+  footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    font-size: 12px;
+    color: var(--text3);
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <rect x="2" y="5" width="16" height="12" rx="2" stroke="white" stroke-width="1.5"/>
+      <path d="M6 5V4a4 4 0 018 0v1" stroke="white" stroke-width="1.5"/>
+      <path d="M7 11h6M10 9v4" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="header-text">
+    <h1>OWU Reunion Weekend — Ticket Counter</h1>
+    <p>Upload your ticket export to get today's counts, ready to paste</p>
+  </div>
+</header>
+
+<div class="main">
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".xls,.xlsx" onchange="handleFile(event)">
+    <div class="drop-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <polyline points="9 15 12 12 15 15"/>
+      </svg>
+    </div>
+    <h2>Drop your ticket XLS file here</h2>
+    <p>or click anywhere to browse &mdash; accepts .xls and .xlsx</p>
+    <span class="file-name" id="fileName"></span>
+  </div>
+
+  <div class="error" id="errorMsg"></div>
+
+  <div class="results" id="results">
+
+    <div class="metrics" id="metricGrid"></div>
+
+    <div class="card">
+      <div style="padding: 12px 16px 0; border-bottom: 1px solid var(--border);">
+        <div class="section-head" style="margin-bottom: 12px;">
+          <span class="section-title">Event breakdown</span>
+          <span class="tag" id="dateTag"></span>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Price</th>
+            <th>Total</th>
+            <th>Buyers</th>
+            <th>Guests</th>
+          </tr>
+        </thead>
+        <tbody id="eventTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="paste-section">
+      <div class="section-head">
+        <span class="section-title">Ready to paste</span>
+        <span class="tag">Tab-separated &mdash; paste directly into Google Sheets</span>
+      </div>
+      <div class="paste-box" id="pasteBox"></div>
+      <div class="actions">
+        <button class="primary" onclick="copyPaste()">Copy to clipboard</button>
+        <button onclick="downloadCSV()">Download CSV</button>
+        <span class="copied-msg" id="copiedMsg">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#2d7a4f" stroke-width="2" stroke-linecap="round"><polyline points="2 7 5.5 10.5 12 3"/></svg>
+          Copied!
+        </span>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetApp()">Upload a different file</button>
+
+  </div>
+</div>
+
+<footer>OWU Alumni Office &mdash; 2026 Reunion Weekend &mdash; Counts are as of the upload date</footer>
+
+<script>
+let csvData = '';
+let pasteData = '';
+
+const dropZone = document.getElementById('dropZone');
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) processFile(f);
+});
+
+function handleFile(e) {
+  const f = e.target.files[0];
+  if (f) processFile(f);
+}
+
+function processFile(file) {
+  const err = document.getElementById('errorMsg');
+  err.style.display = 'none';
+
+  const nameEl = document.getElementById('fileName');
+  nameEl.textContent = file.name;
+  nameEl.style.display = 'inline-block';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const events = [];
+
+      wb.SheetNames.forEach(sheetName => {
+        const ws = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (rows.length < 3) return;
+
+        const titleRow = rows[0];
+        const headerRow = rows[1];
+        const dataRows = rows.slice(2).filter(r => r.some(c => String(c).trim() !== ''));
+
+        const titleCell = Array.isArray(titleRow) ? String(titleRow[0] || '') : '';
+        const priceMatch = sheetName.match(/\((\d+(?:\.\d+)?)\)/);
+        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+
+        const headers = headerRow.map(h => String(h || '').trim());
+        const guestTypeIdx = headers.findIndex(h => h.toLowerCase().includes('guest type'));
+
+        let buyers = 0, accompanying = 0;
+        dataRows.forEach(row => {
+          const gt = guestTypeIdx >= 0 ? String(row[guestTypeIdx] || '').trim().toLowerCase() : '';
+          if (gt === 'buyer') buyers++;
+          else accompanying++;
+        });
+
+        let eventName = titleCell.split('[')[0].replace(/\(R\)/gi, '').replace(/\s+/g, ' ').trim();
+        if (!eventName || eventName.length < 3) eventName = sheetName;
+
+        events.push({ eventName, price, total: dataRows.length, buyers, accompanying });
+      });
+
+      if (events.length === 0) throw new Error('No valid event tabs found in this file. Make sure it matches the ticket export format.');
+
+      renderResults(events);
+    } catch(ex) {
+      err.textContent = ex.message;
+      err.style.display = 'block';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderResults(events) {
+  const totalRegs = events.reduce((s, e) => s + e.total, 0);
+  const totalBuyers = events.reduce((s, e) => s + e.buyers, 0);
+  const totalAccompanying = events.reduce((s, e) => s + e.accompanying, 0);
+
+  document.getElementById('metricGrid').innerHTML = `
+    <div class="metric">
+      <div class="metric-label">Total registrations</div>
+      <div class="metric-value">${totalRegs}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Total buyers</div>
+      <div class="metric-value">${totalBuyers}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Events tracked</div>
+      <div class="metric-value">${events.length}</div>
+    </div>
+  `;
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const shortDate = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).replace(' ', '-');
+
+  document.getElementById('dateTag').textContent = dateStr;
+
+  const tbody = document.getElementById('eventTbody');
+  tbody.innerHTML = '';
+  events.forEach(ev => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="event-name">${ev.eventName}</td>
+      <td class="price">${ev.price === 0 ? 'Free' : '$' + ev.price.toFixed(2)}</td>
+      <td><span class="count-pill">${ev.total}</span></td>
+      <td style="color:var(--text2); font-family:var(--mono); font-size:13px;">${ev.buyers}</td>
+      <td style="color:var(--text2); font-family:var(--mono); font-size:13px;">${ev.accompanying}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const pasteLines = events.map(ev => `${ev.eventName}\t${ev.total}`);
+  pasteData = pasteLines.join('\n');
+
+  const pasteBox = document.getElementById('pasteBox');
+  pasteBox.innerHTML = `<span class="date-line"># ${dateStr}</span>\n` +
+    events.map(ev => {
+      const parts = ev.eventName.split(/\s{2,}/);
+      return `<span class="event-line">${ev.eventName}</span>\t<span class="count-part">${ev.total}</span>`;
+    }).join('\n');
+
+  csvData = 'Event,Total Registrants,Buyers,Accompanying,Ticket Price\n' +
+    events.map(ev => `"${ev.eventName}",${ev.total},${ev.buyers},${ev.accompanying},${ev.price}`).join('\n');
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyPaste() {
+  navigator.clipboard.writeText(pasteData).then(() => {
+    const msg = document.getElementById('copiedMsg');
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 2500);
+  });
+}
+
+function downloadCSV() {
+  const blob = new Blob([csvData], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const today = new Date().toISOString().slice(0, 10);
+  a.download = `owu-reunion-counts-${today}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function resetApp() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('fileName').style.display = 'none';
+  document.getElementById('errorMsg').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
