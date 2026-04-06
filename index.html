@@ -628,6 +628,25 @@
       </table>
     </div>
 
+    <!-- Class Year Breakdown (reunion dinners sheet) -->
+    <div class="card" id="classYearCard" style="display:none;">
+      <div style="padding: 12px 16px; border-bottom: 1px solid var(--border);">
+        <div class="section-head" style="margin-bottom:0;">
+          <span class="section-title">Reunion Dinners &mdash; Class Year Breakdown</span>
+          <span class="tag" id="classYearTotal"></span>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Class Year</th>
+            <th class="col-total">Count</th>
+          </tr>
+        </thead>
+        <tbody id="classYearTbody"></tbody>
+      </table>
+    </div>
+
     <div class="paste-section">
       <div class="section-head">
         <span class="section-title">Ready to paste</span>
@@ -654,8 +673,9 @@
 <script>
 let csvData = '';
 let pasteData = '';
-let weekendEvents = null;  // [{eventName, price, total, buyers, accompanying}]
-let fiftieth = null;       // {events: {name: count}, totalRows: n}
+let weekendEvents = null;     // [{eventName, price, total, buyers, accompanying}]
+let weekendClassYears = null; // [{year, count}] from reunion dinners sheet
+let fiftieth = null;          // {events: {name: count}, totalRows: n}
 
 // ── Drag & drop wiring ───────────────────────────────────────────────────────
 ['dropZone1','dropZone2'].forEach((id, idx) => {
@@ -692,7 +712,9 @@ function processFile(file, kind) {
       const wb = XLSX.read(data, { type: 'array' });
 
       if (kind === 'weekend') {
-        weekendEvents = parseWeekendFile(wb);
+        const parsed = parseWeekendFile(wb);
+        weekendEvents = parsed.events;
+        weekendClassYears = parsed.classYears;
         const zone = document.getElementById('dropZone1');
         zone.classList.remove('drag-over');
         zone.classList.add('loaded-weekend');
@@ -716,6 +738,8 @@ function processFile(file, kind) {
 // Parse the reunion weekend file (multiple sheets, one per event)
 function parseWeekendFile(wb) {
   const events = [];
+  let classYears = null;
+
   wb.SheetNames.forEach(sheetName => {
     const ws = wb.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
@@ -743,9 +767,50 @@ function parseWeekendFile(wb) {
     if (!eventName || eventName.length < 3) eventName = sheetName;
 
     events.push({ eventName, price, total: dataRows.length, buyers, accompanying });
+
+    // Extract class year breakdown from the reunion dinners sheet
+    if (eventName.toLowerCase().includes('reunion dinner') || sheetName.toLowerCase().includes('reunion-dinner')) {
+      const classYearIdx = headers.findIndex(h => h.toLowerCase().includes('class year'));
+      if (classYearIdx >= 0) {
+        const counts = {};
+        dataRows.forEach(row => {
+          const raw = String(row[classYearIdx] || '').trim();
+          const key = normalizeClassYear(raw);
+          counts[key] = (counts[key] || 0) + 1;
+        });
+        // Sort: numeric years ascending, then N/A, then Blank
+        classYears = Object.entries(counts).sort(([a], [b]) => {
+          const na = /^\d{4}$/.test(a), nb = /^\d{4}$/.test(b);
+          if (na && nb) return parseInt(a) - parseInt(b);
+          if (na) return -1;
+          if (nb) return 1;
+          if (a === 'N/A' && b === 'Blank') return -1;
+          if (a === 'Blank' && b === 'N/A') return 1;
+          return a.localeCompare(b);
+        }).map(([year, count]) => ({ year, count }));
+      }
+    }
   });
+
   if (events.length === 0) throw new Error('No valid event tabs found in the Reunion Weekend file.');
-  return events;
+  return { events, classYears };
+}
+
+// Normalize raw class year value to a display string
+function normalizeClassYear(raw) {
+  if (!raw || raw === '') return 'Blank';
+  // N/A variants (na, NA, N/A, n/a, N/a, Na, etc.)
+  if (/^n\/?a$/i.test(raw)) return 'N/A';
+  // Float years like "1981.0" → strip decimal
+  const floatMatch = raw.match(/^(\d+)\.0+$/);
+  if (floatMatch) raw = floatMatch[1];
+  // 2-digit year → 4-digit
+  if (/^\d{2}$/.test(raw)) {
+    const n = parseInt(raw);
+    return String(n <= 26 ? 2000 + n : 1900 + n);
+  }
+  // 4-digit year possibly followed by extra text — keep as-is (informative)
+  return raw;
 }
 
 // Parse the 50th reunion file (single sheet, cols R & S = event choices)
@@ -894,13 +959,40 @@ function renderResults(merged) {
     tbody.appendChild(tr);
   });
 
-  // Paste output (tab-separated, 4 columns)
+  // ── Class year table ───────────────────────────────────────────────────────
+  const cyCard = document.getElementById('classYearCard');
+  const cyTbody = document.getElementById('classYearTbody');
+  cyTbody.innerHTML = '';
+  if (weekendClassYears && weekendClassYears.length > 0) {
+    cyCard.style.display = 'block';
+    const cyTotal = weekendClassYears.reduce((s, r) => s + r.count, 0);
+    document.getElementById('classYearTotal').textContent = `${cyTotal} total`;
+    weekendClassYears.forEach(({ year, count }) => {
+      const isSpecial = year === 'N/A' || year === 'Blank';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="event-name" style="color:${isSpecial ? 'var(--text3)' : 'var(--text)'};">${year}</td>
+        <td class="num"><span class="count-pill ${isSpecial ? 'pill-zero' : 'pill-total'}">${count}</span></td>
+      `;
+      cyTbody.appendChild(tr);
+    });
+  } else {
+    cyCard.style.display = 'none';
+  }
+
+  // ── Paste output (tab-separated) ───────────────────────────────────────────
   const header = `Event\tWeekend\t50th Reunion\tTotal`;
   const lines = merged.map(ev => `${ev.name}\t${ev.weekend}\t${ev.fiftieth}\t${ev.total}`);
-  pasteData = [header, ...lines].join('\n');
+  let pasteLines = [header, ...lines];
+  if (weekendClassYears && weekendClassYears.length > 0) {
+    pasteLines.push('');
+    pasteLines.push('Reunion Dinners — Class Year Breakdown\tCount');
+    weekendClassYears.forEach(({ year, count }) => pasteLines.push(`${year}\t${count}`));
+  }
+  pasteData = pasteLines.join('\n');
 
   const pasteBox = document.getElementById('pasteBox');
-  pasteBox.innerHTML =
+  let pasteHtml =
     `<span class="date-line"># ${dateStr}</span>\n` +
     `<span class="header-line">Event\t\t\t</span><span class="num-weekend">Weekend</span>\t<span class="num-50th">50th</span>\t<span class="num-total">Total</span>\n` +
     merged.map(ev =>
@@ -909,11 +1001,23 @@ function renderResults(merged) {
       `<span class="num-50th">${ev.fiftieth}</span>\t` +
       `<span class="num-total">${ev.total}</span>`
     ).join('\n');
+  if (weekendClassYears && weekendClassYears.length > 0) {
+    pasteHtml += `\n\n<span class="date-line"># Reunion Dinners — Class Year Breakdown</span>\n`;
+    pasteHtml += weekendClassYears.map(({ year, count }) =>
+      `<span class="event-line">${year}</span>\t<span class="num-total">${count}</span>`
+    ).join('\n');
+  }
+  pasteBox.innerHTML = pasteHtml;
 
   csvData = 'Event,Weekend Count,50th Reunion Count,Total,Weekend Buyers,Weekend Accompanying,Ticket Price\n' +
     merged.map(ev =>
       `"${ev.name}",${ev.weekend},${ev.fiftieth},${ev.total},${ev.weekendBuyers},${ev.weekendAccompanying},${ev.price}`
     ).join('\n');
+  if (weekendClassYears && weekendClassYears.length > 0) {
+    csvData += '\n\nReunion Dinners - Class Year Breakdown\n' +
+      'Class Year,Count\n' +
+      weekendClassYears.map(({ year, count }) => `"${year}",${count}`).join('\n');
+  }
 
   document.getElementById('results').style.display = 'block';
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -941,6 +1045,7 @@ function downloadCSV() {
 
 function resetApp() {
   weekendEvents = null;
+  weekendClassYears = null;
   fiftieth = null;
   document.getElementById('results').style.display = 'none';
   ['fileName1','fileName2'].forEach(id => {
